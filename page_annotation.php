@@ -24,7 +24,10 @@ session_start();
             $id_utilisateur=$_SESSION['id'];
             echo "<p id='user'>".strtoupper($_SESSION['nom'])." ".ucfirst($_SESSION['prenom'])." ($id_utilisateur)</p>";
             $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
-            # à faire : menu
+            $menu_automatique = array("accueil","visualisation_accord");
+            foreach($menu_automatique as $value){
+                echo "<a href=\"page_".$value.".php\">".$value."</a><br/>";
+            }
         ?>
         <table width="100%" border="2" align="center">
             <tr>

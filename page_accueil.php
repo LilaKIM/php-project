@@ -2,13 +2,13 @@
 session_start();
 $_SESSION['nom']=$_POST['nom'];
 $_SESSION['prenom']=$_POST['prenom'];
-$_SESSION['id']=$_POST['id'];
+$_SESSION['id_utilisateur']=$_POST['id'];
 $_SESSION['mdp']=$_POST['mdp'];
 ?>
 
 <html>
     <head>
-        <title>ANNOTATION</title>
+        <title>ACCUEIL</title>
         <link rel="shortcut icon" href="images/annotation.png"/>
         <style>
             h1 {
@@ -20,7 +20,9 @@ $_SESSION['mdp']=$_POST['mdp'];
         <?php
             $nom=$_SESSION['nom'];
             $prenom=$_SESSION['prenom'];
-            $id=$_SESSION['id'];
+            strtolower($nom);
+            strtolower($prenom);
+            $id=$_SESSION['id_utilisateur'];
             $mdp=$_SESSION['mdp'];
             $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
             $identification=$bdd->prepare('SELECT * FROM utilisateurs 
@@ -53,13 +55,19 @@ $_SESSION['mdp']=$_POST['mdp'];
             $acces->closeCursor();
             #print_r($useracces);
             #print_r($useracces['accueil']);
+            $menu_automatique = array("connexion", "accueil", "annotation", "visualisation_accord", "visualisation_annotation", "administration");
             if (! $useracces['accueil']) {
                 echo "<br>Votre demande est en cours, veuillez réessayer ultérieurement.<br>";
             }
             else {
                 echo "<h1>Accueil</h1>";
-                echo "<a href=\"page_annotation.php\">Annotation</a>";
                 # menu généré automatiquement (rubrique selon $useracces)
+                foreach($menu_automatique as $value){
+                    if ($useracces[$value] == 1){
+                        echo "<a href=\"page_".$value.".php\">".$value."</a><br/>";
+                    }
+                }
+
                 # présentation du projet
                 # description du corpus traité
             }

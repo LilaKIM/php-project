@@ -22,10 +22,8 @@ session_start();
             echo "
             <center>
                 <form method=\"post\" action=\"page_accueil.php\">
-                Nom : <input type=\"text\" name=\"nom\"><br>
-                <p id=\"hint\">* en minuscule, sans accent *</p>
-                Prénom : <input type=\"text\" name=\"prenom\"><br>
-                <p id=\"hint\">* en minuscule, sans accent *</p>
+                Nom : <input type=\"text\" name=\"nom\"><br><br/>
+                Prénom : <input type=\"text\" name=\"prenom\"><br><br/>
                 Identifiant : <input type=\"text\" name=\"id\"><br>
                 <p id=\"hint\">* numéro étudiant *</p>
                 Mot de passe : <input type=\"text\" name=\"mdp\"><br>
