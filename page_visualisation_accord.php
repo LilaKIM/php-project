@@ -14,9 +14,18 @@ session_start();
     </head>
     <body>
         <?php
-            $menu_automatique = array("annotation", "visualisation_annotation");
-            foreach($menu_automatique as $value){
-                echo "<a href=\"page_".$value.".php\">".$value."</a><br/>";
+            # Menu automatique (sep=', ')
+            menu_auto("annotation, visualisation_annotation");
+        ?>
+        <?php
+            # Menu automatique (sep=', ')
+            function menu_auto($rubriques_possibles){
+                $rubs = explode(", ", $rubriques_possibles);
+                echo "<table><tr>";
+                foreach($rubs as $value){
+                    echo "<td><a href=\"page_".$value.".php\">".ucfirst($value)."</a></td>";
+                }
+                echo "<tr/><table/>";
             }
         ?>
     </body>

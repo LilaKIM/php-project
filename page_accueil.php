@@ -55,21 +55,29 @@ $_SESSION['mdp']=$_POST['mdp'];
             $acces->closeCursor();
             #print_r($useracces);
             #print_r($useracces['accueil']);
-            $menu_automatique = array("connexion", "accueil", "annotation", "visualisation_accord", "visualisation_annotation", "administration");
             if (! $useracces['accueil']) {
                 echo "<br>Votre demande est en cours, veuillez réessayer ultérieurement.<br>";
             }
             else {
                 echo "<h1>Accueil</h1>";
                 # menu généré automatiquement (rubrique selon $useracces)
-                foreach($menu_automatique as $value){
-                    if ($useracces[$value] == 1){
-                        echo "<a href=\"page_".$value.".php\">".$value."</a><br/>";
-                    }
-                }
+                menu_auto_acces("connexion, accueil, annotation, visualisation_accord, visualisation_annotation, administration", $useracces);
 
                 # présentation du projet
                 # description du corpus traité
+            }
+        ?>
+        <?php
+            # Menu automatique (sep=', ')
+            function menu_auto_acces($rubriques_possibles, $useracces){
+                $rubs = explode(", ", $rubriques_possibles);
+                echo "<table><tr>";
+                foreach($rubs as $value){
+                    if ($useracces[$value] == 1){
+                        echo "<td><a href=\"page_".$value.".php\">".ucfirst($value)."</a></td>";
+                    }
+                }
+                echo "<tr/><table/>";
             }
         ?>
     </body>

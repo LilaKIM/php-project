@@ -22,12 +22,11 @@ session_start();
     <body>
         <?php
             $id_utilisateur=$_SESSION['id'];
-            echo "<p id='user'>".strtoupper($_SESSION['nom'])." ".ucfirst($_SESSION['prenom'])." ($id_utilisateur)</p>";
+            echo "<p id='user'>".strtoupper($_SESSION['nom'])." ".ucfirst($_SESSION['prenom'])." (".$id_utilisateur.")</p>";
             $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
-            $menu_automatique = array("accueil","visualisation_accord");
-            foreach($menu_automatique as $value){
-                echo "<a href=\"page_".$value.".php\">".$value."</a><br/>";
-            }
+            
+            # Menu automatique vers page d'accueil et visualisation_accord
+            menu_auto("accueil, visualisation_accord");
         ?>
         <table width="100%" border="2" align="center">
             <tr>
@@ -144,6 +143,17 @@ session_start();
             # à faire : insertion de problèmes signalés
             echo "<script>location.href='page_annotation.php';</script>";
         }
+        ?>
+        <?php  
+            # Menu automatique (sep=', ')
+            function menu_auto($rubriques_possibles){
+                $rubs = explode(", ", $rubriques_possibles);
+                echo "<table><tr>";
+                foreach($rubs as $value){
+                    echo "<td><a href=\"page_".$value.".php\">".ucfirst($value)."</a></td>";
+                }
+                echo "<tr/><table/>";
+            }
         ?>
     </body>
 </html>
