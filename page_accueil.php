@@ -2,13 +2,13 @@
 session_start();
 $_SESSION['nom']=$_POST['nom'];
 $_SESSION['prenom']=$_POST['prenom'];
-$_SESSION['id']=$_POST['id'];
+$_SESSION['id_utilisateur']=$_POST['id'];
 $_SESSION['mdp']=$_POST['mdp'];
 ?>
 
 <html>
     <head>
-        <title>ANNOTATION</title>
+        <title>ACCUEIL</title>
         <link rel="shortcut icon" href="images/annotation.png"/>
         <style>
             h1 {
@@ -20,7 +20,9 @@ $_SESSION['mdp']=$_POST['mdp'];
         <?php
             $nom=$_SESSION['nom'];
             $prenom=$_SESSION['prenom'];
-            $id=$_SESSION['id'];
+            strtolower($nom);
+            strtolower($prenom);
+            $id=$_SESSION['id_utilisateur'];
             $mdp=$_SESSION['mdp'];
             $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
             $identification=$bdd->prepare('SELECT * FROM utilisateurs 
@@ -58,10 +60,24 @@ $_SESSION['mdp']=$_POST['mdp'];
             }
             else {
                 echo "<h1>Accueil</h1>";
-                echo "<a href=\"page_annotation.php\">Annotation</a>";
                 # menu généré automatiquement (rubrique selon $useracces)
+                menu_auto_acces("connexion, accueil, annotation, visualisation_accord, visualisation_annotation, administration", $useracces);
+
                 # présentation du projet
                 # description du corpus traité
+            }
+        ?>
+        <?php
+            # Menu automatique (sep=', ')
+            function menu_auto_acces($rubriques_possibles, $useracces){
+                $rubs = explode(", ", $rubriques_possibles);
+                echo "<table><tr>";
+                foreach($rubs as $value){
+                    if ($useracces[$value] == 1){
+                        echo "<td><a href=\"page_".$value.".php\">".ucfirst($value)."</a></td>";
+                    }
+                }
+                echo "<tr/><table/>";
             }
         ?>
     </body>
