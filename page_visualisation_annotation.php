@@ -31,7 +31,7 @@ session_start();
             $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
             $statut = $bdd->query('SELECT statut FROM utilisateurs WHERE id LIKE '.$id_utilisateur);
             while($data = $statut -> fetch()){$statut_utilisateur = $data['statut'];}
-            if ($statut_utilisateur == 'admin'){echo "admin";}else{echo $statut_utilisateur;}
+            // if ($statut_utilisateur == 'admin'){echo "admin";}else{echo $statut_utilisateur;}
             $statut->closeCursor();
 
             #boutons permettant de selectionner un des critères (portion/taille_text/descriptieurs)
@@ -188,7 +188,7 @@ session_start();
                     }
                     $annotation->closeCursor();
                     
-                    echo "<table><tr><td>".$titre[0]."</td><td>".$titre[1]."</td></tr>";
+                    echo "<table><tr><td><b>".$titre[0]."</b></td><td><b>".$titre[1]."</b></td></tr>";
                     for ($i=0;$i<count($id_extrait);$i++){
                         $extrait = $bdd->query('SELECT * FROM corpus WHERE id_extrait LIKE '.$id_extrait[$i]);
                         while ($data = $extrait->fetch()){
