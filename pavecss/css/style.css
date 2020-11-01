@@ -31,7 +31,7 @@ img{max-width:100%;}
 /*--login start here--*/
 body{
    background: url(../images/banner.jpg)repeat;
-   padding:100px 0px 30px 0px;
+   padding: 100px 0px 30px 0px;
    font-family: 'Roboto', sans-serif;
    font-size: 100%;
 }
@@ -166,7 +166,7 @@ body{
   -webkit-border-radius:  0px 0px 25px 25px;
   -moz-border-radius: 0px 0px 25px 25px;
   -o-border-radius: 0px 0px 25px 25px;
-  text-align: right;
+  text-align: left;
   border-top: 2px solid #AD4337;
 }
 .login-bottom h3 {

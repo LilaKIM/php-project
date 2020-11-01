@@ -28,5 +28,19 @@ session_start();
                 echo "<tr/><table/>";
             }
         ?>
+
+
+        <?php
+            $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
+            $identification=$bdd->prepare('SELECT * FROM utilisateurs WHERE id=:id');
+            $identification->execute(array('id'=>'21912373'));
+            $userinfo=$identification->fetch();
+            $identification->closeCursor;
+            $nom=$userinfo['nom'];
+            $prenom=$userinfo['prenom'];
+            print_r($userinfo);
+
+
+        ?>
     </body>
 </html>
