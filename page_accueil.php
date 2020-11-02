@@ -61,7 +61,7 @@ $_SESSION['mdp']=$_POST['mdp'];
             else {
                 echo "<h1>Accueil</h1>";
                 # menu généré automatiquement (rubrique selon $useracces)
-                menu_auto_acces("connexion, accueil, annotation, visualisation_accord, visualisation_annotation, administration", $useracces);
+                menu_auto_acces("connexion, accueil, annotation, visualisation_accord, visualisation_annotation, administration, Fmesure", $useracces);
 
                 # présentation du projet
                 # description du corpus traité
