@@ -7,7 +7,7 @@ session_start();
     $identification=$bdd->prepare('SELECT * FROM utilisateurs WHERE id=:id');
     $identification->execute(array('id'=>$id_utilisateur));
     $userinfo=$identification->fetch();
-    $identification->closeCursor;
+    $identification->closeCursor();
     $nom=$userinfo['nom'];
     $prenom=$userinfo['prenom'];
 ?>
@@ -47,6 +47,7 @@ session_start();
                     <b>
                         <?php
                         echo strtoupper($nom)." ".ucfirst($prenom)." (".$id_utilisateur.")";
+                        $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
                         ?>
                     </b>
                     <i class="material-icons right">arrow_drop_down</i>
@@ -63,122 +64,161 @@ session_start();
                 </h1>
             </div>
             <div id="page-inner">
-<?php
-# Premier extrait sans aucune annotation, valide ou non
-$interogeextrait=$bdd->prepare('SELECT * FROM corpus
-WHERE corpus.id_extrait NOT IN (SELECT id_extrait FROM annotation
-WHERE annotation.id_utilisateur=:id_utilisateur)');
-$interogeextrait->execute(array('id_utilisateur'=>$id_utilisateur));
-$extrait=$interogeextrait->fetch();
-if (! $extrait) {
-$texte="Vous avez annoté tous les extraits. Procédez à la visualisation.";
-}
-else {
-$texte=$extrait['extrait'];
-$id_extrait=$extrait['id_extrait'];
-}
-?>
-
-                <div class="row">
-                    <div class="col-md-8 col-sm-8">
+            <form method="post" action="page_annotation.php" id="form">
+            <?php
+                $interrogeextrait=$bdd->prepare('SELECT * FROM corpus
+                                WHERE corpus.id_extrait NOT IN (SELECT id_extrait FROM annotation
+                                WHERE annotation.id_utilisateur=:id_utilisateur)');
+                $interrogeextrait->execute(array('id_utilisateur'=>$id_utilisateur));
+                $extrait=$interrogeextrait->fetch();
+                if (! $extrait) {
+                    $texte="Vous avez parcouru tous les extraits.<br>Refaites ce qui sont invalides, puis procédez à la visualisation.";
+                }
+                else {
+                    $texte=$extrait['extrait'];
+                    $id_extrait=$extrait['id_extrait'];
+                }
+            ?>
+                <div class="col">
+                    <div class="col-md-4 col-sm-4">
+                        <div class="card red lighten-2">
+                            <div class="card-content white-text">
+                                <?php
+                                echo "
+                                    <input type=\"hidden\" name=\"id_extrait\" value=$id_extrait form=\"form\">
+                                    <input type=\"hidden\" name=\"id_utilisateur\" value=$id_utilisateur form=\"form\">
+                                ";
+                                echo "
+                                    <span class=\"card-title\">Tweet n°$id_extrait</span>
+                                    <p>$texte</p>
+                                ";
+                                $regs=array("soutenu","courant","familier","poubelle");
+                                $anno_pro=array();
+                                $anno_des=array();
+                                ?>
+                            </div>
+                        </div>
+                        <!--/Tweet : id & texte-->
                         <div class="card">
                             <div class="card-content">
                                 <?php
+                                # Proportion
+                                foreach ($regs as $reg) {
+                                    echo "<p><b>".strtoupper($reg)."</b></p>
+                                        <input class=\"red lighten-2\" type=\"radio\" name=\"anno_pro[$reg]\" value=0 id=\"$reg 0 %\" form=\"form\" checked><label for=\"$reg 0 %\"> 0 %</label>
+                                        <input class=\"red lighten-2\" type=\"radio\" name=\"anno_pro[$reg]\" value=1 id=\"$reg 25 %\" form=\"form\"><label for=\"$reg 25 %\"> 25 %</label>
+                                        <input class=\"red lighten-2\" type=\"radio\" name=\"anno_pro[$reg]\" value=2 id=\"$reg 50 %\" form=\"form\"><label for=\"$reg 50 %\"> 50 %</label>
+                                        <input class=\"red lighten-2\" type=\"radio\" name=\"anno_pro[$reg]\" value=3 id=\"$reg 75 %\" form=\"form\"><label for=\"$reg 75 %\"> 75 %</label>
+                                        <input class=\"red lighten-2\" type=\"radio\" name=\"anno_pro[$reg]\" value=4 id=\"$reg 100 %\" form=\"form\"><label for=\"$reg 100 %\"> 100 %</label><br>
+                                    ";
+                                }
                                 echo "
-                                <span class=\"card-title\">Tweet n°$id_extrait</span>
-                                <p>$texte</p>
+                                        <div class=\"clearBoth\"></div>
                                 ";
                                 ?>
                             </div>
                         </div>
-				</div>
-                </div>
-				<div class="row">
-                    <?php
-                    echo "
-					<form method=\"post\" action=\"page_annotation.php\">
-					<div class=\"col-md-5 col-sm-5\">
-                    <div class=\"card\">
-                        <div class=\"card-action\">
-                            Annotation
-                        </div>
-                        <div class=\"card-content\">
-                           
-							<ul class=\"collapsible\" data-collapsible=\"accordion\">
-									
-									<input type=\"hidden\" name=\"id_extrait\" value=$id_extrait>
-									<input type=\"hidden\" name=\"id_utilisateur\" value=$id_utilisateur>
-									";
-									$registres=array("soutenu","courant","familier","poubelle");
-									$proportions=array();
-									$registre_descripteurs=array();
-									foreach ($registres as $registre) {
-										echo "
-										<li>
-										<div class=\"collapsible-header\">$registre</div>
-										<div class=\"collapsible-body\">
-										
-										
-										<p>
-										<input type=\"radio\" name=\"proportions[$registre]\" value=0 id=\"$registre 0 %\" checked><label for=\"$registre 0 %\"> 0 %</label>
-										<input type=\"radio\" name=\"proportions[$registre]\" value=1 id=\"$registre 25 %\" ><label for=\"$registre 25 %\"> 25 %</label>
-										<input type=\"radio\" name=\"proportions[$registre]\" value=2 id=\"$registre 50 %\" ><label for=\"$registre 50 %\"> 50 %</label>
-										<input type=\"radio\" name=\"proportions[$registre]\" value=3 id=\"$registre 75 %\" ><label for=\"$registre 75 %\"> 75 %</label>
-										<input type=\"radio\" name=\"proportions[$registre]\" value=4 id=\"$registre 100 %\"><label for=\"$registre 100 %\"> 100 %</label>
-										</p><p>
-										";
-										$descripteurs=$bdd->query('SELECT id_descripteur, descripteur FROM descripteurs');
-										while ($descrips=$descripteurs->fetch()) {
-											$id_descrip=$descrips['id_descripteur'];
-											$descrip=$descrips['descripteur'];
-											echo "
-											
-											<input type=\"checkbox\" name=\"registre_descripteurs[$registre][]\" value=$id_descrip class=\"filled-in\" id=\"$registre $id_descrip\" >
-											<label for=\"$registre $id_descrip\"> $id_descrip $descrip</label></p>
-										";}
-									echo"
-
-                                        </li>";}
-                        echo"          
-							</div></ul>
-							 </button>							
+                        <!--/Annotation : proportion-->
+                        <div class="card">
+                            <div class="card-content">
+                                <p><b>Signaler un problèmes :</b></p><br>
+                                <input type="checkbox" class="filled-in" id="errid1" name="problemes[]" value="erreur de formatage" form="form"/>
+                                <label for="errid1">Erreur de formatage</label>
+                                <input type="checkbox" class="filled-in" id="errid2" name="problemes[]" value="mauvaise qualité de texte" form="form"/>
+                                <label for="errid2">Mauvaise qualité de texte</label>
+                                <div class="input-field col s12">
+                                <input id="autre" name="autreprobleme" type="text" class="validate" form="form">
+                                <label for="autre">Autre</label>
+                                <div class=\"clearBoth\"></div>
                             </div>
                         </div>
-					
-					
-					<div class=\"col-lg-5\">
-                    <div class=\"card\">
-                        <div class=\"card-action\">
-                            Signaler un problème :
-                        </div>
-                        <div class=\"card-content\">
-								
-								
-									<p><input type=\"checkbox\" class=\"filled-in\" id=\"errid1\" name=\"problemes[]\" value=\"erreur de formatage\"/>
-									<label for=\"errid1\">Erreur de formatage</label>
-									<input type=\"checkbox\" class=\"filled-in\" id=\"errid2\" name=\"problemes[]\" value=\"mauvaise qualité de texte\"/>
-									<label for=\"errid2\">Mauvaise qualité de texte</label></p>
-								
-								
-								
-								  
-									<div class=\"input-field col s12\">
-									  <input id=\"autre\" name=\"autreprobleme\" type=\"text\" class=\"validate\">
-									  <label for=\"autre\">Autre</label>
-									</div>
-								  
-								<div class=\"clearBoth\"></div>
-						</div>	
-					</div></div><input type=\"submit\" name=\"extraitannote\" value=\"Suivant\">								  
-							</form>";
-							?>
-
-
-
-
+                    </div>
                 </div>
-
-
+                <div class="col">
+                    <div class="col-md-6 col-sm-6">
+                        <div class="card">
+                            <div class="card-content">
+                                <?php
+                                # Tabs
+                                echo "
+                                        <div class=\"col\">
+                                        <ul class=\"tabs\">
+                                    ";
+                                foreach ($regs as $reg) {
+                                    echo "
+                                            <li class=\"tab col s3\"><a href=\"#".$reg."\">".ucfirst($reg)."</a></li>
+                                    ";
+                                }
+                                echo "
+                                        </ul>
+                                        </div>
+                                        <div class=\"clearBoth\"><br /></div>
+                                ";
+                                # Descripteurs
+                                $interrogedescrip=$bdd->query('SELECT id_descripteur, descripteur FROM descripteurs');
+                                $descrips=$interrogedescrip->fetchAll();
+                                $interrogedescrip->closeCursor();
+                                foreach ($regs as $reg) {
+                                    echo "<div id=\"$reg\" class=\"col s12\">";
+                                    foreach ($descrips as $descrip) {
+                                        $id_des = $descrip['id_descripteur'];
+                                        $des = $descrip['descripteur'];
+                                        echo "
+                                            <input type=\"checkbox\" name=\"anno_des[$reg][]\" value=$id_des class=\"filled-in\" id=\"$reg $id_des\" form=\"form\">
+                                            <label for=\"$reg $id_des\">$id_des $des</label></p>
+                                        ";
+                                    }
+                                    echo "</div>";
+                                }
+                                echo "
+                                        <div class=\"clearBoth\"></div>
+                                ";
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                    <!--/Annotation : descripteurs-->
+                </div>
+                <div class="col">
+                    <div class="col-md-2 col-sm-2">
+                        <div class="card">
+                            <div class="card-content">
+                                <input type="submit" class="waves-effect waves-light red lighten-2 btn" name="enregistrement" value="Enregistrer" form="form">
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-content">
+                                <?php
+                                    $interrogeanno=$bdd->prepare('SELECT * FROM annotation 
+                                            WHERE id_utilisateur=:id_utilisateur');
+                                    $interrogeanno->execute(array('id_utilisateur'=>$id_utilisateur));
+                                    $annos=$interrogeanno->fetchAll();
+                                    echo "
+                                        <form method=\"post\" action=\"page_annotation.php\" id=\"plan\">
+                                        <input type=\"hidden\" name=\"id_utilisateur\" value=$id_utilisateur form=\"plan\">
+                                        Annotation(s) invalide(s) :<br><br>
+                                    ";
+                                    foreach ($annos as $anno) {
+                                        $id=$anno['id_extrait'];
+                                        if ($anno['validite']==0) {
+                                            echo "
+                                                <input class=\"red lighten-2\" type=\"radio\" name=\"idskip\" value=$id id=$id form=\"plan\"><label for=$id> $id</label>
+                                            ";
+                                        }
+                                    }
+                                    echo "
+                                        </p>
+                                        <input type=\"submit\" class=\"waves-effect waves-light red lighten-2 btn\" name=\"refaire\" value=\"Refaire\" form=\"plan\">
+                                        </form>
+                                    ";
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--/Plan -->
+                </div>
             </div>
             <!-- /. PAGE INNER  -->
         </div>
@@ -214,33 +254,53 @@ $id_extrait=$extrait['id_extrait'];
         <!-- /. NAV SIDE  -->
     </div>
     <!-- /. WRAPPER  -->
-	<?php
-    if (isset($_POST['extraitannote'])) {
+<?php
+    if (isset($_POST['refaire'])) {
+        $id_extrait=$_POST['idskip'];
+        $id_utilisateur=$_POST['id_utilisateur'];
+        $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
+        $deleteanno=$bdd->prepare('DELETE FROM annotation 
+                        WHERE id_extrait=:id_extrait AND id_utilisateur=:id_utilisateur');
+        $deleteanno->execute(array('id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur));
+        $deleteanno->closeCursor();
+        echo "<script>location.href='page_annotation.php';</script>";
+    }
+    if (isset($_POST['enregistrement'])) {
         $id_extrait=$_POST['id_extrait'];
         $id_utilisateur=$_POST['id_utilisateur'];
-        $proportions=$_POST['proportions'];
-        $registre_descripteurs=$_POST['registre_descripteurs'];
+        $anno_pro=$_POST['anno_pro'];
+        $anno_des=$_POST['anno_des'];
         $problemes=$_POST['problemes'];
-        # à faire : faut vérifier la somme de proportion est bien 4 (signifie 100%), sinon, alerte et retourner
-        # à faire : faut vérifier proportion>0 <=> descripteur(s) choisi(s)
+        # Vérification de validité de l'annotation
+        function examine_anno($pro,$des) {
+            if (array_sum($pro) != 4) {return 0;}
+            $regs=array("soutenu","courant","familier","poubelle");
+            foreach ($regs as $reg) {
+                if ($pro[$reg] == 0 and $des[$reg]) {return 0;}
+                if ($pro[$reg] > 0 and !$des[$reg]) {return 0;}
+            }
+            return 1;
+        }
         $bdd=new PDO('mysql:host=localhost:8889;dbname=php-projet','root','root');
-        $insertanno=$bdd->prepare('INSERT INTO annotation (id_extrait,id_utilisateur)
-                        VALUES (:id_extrait,:id_utilisateur)');
-        $insertanno->execute(array('id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur));
+        # Ajout de l'annotation
+        # validite=0 signifie que l'utilisateur a au moins rencontré cet extrait
+        $insertanno=$bdd->prepare('INSERT INTO annotation (id_extrait,id_utilisateur,validite)
+                        VALUES (:id_extrait,:id_utilisateur,:validite)');
+        $insertanno->execute(array('id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur,
+                        'validite'=>examine_anno($anno_pro,$anno_des)));
         $insertanno->closeCursor();
+        # Insertion de proportions
         $insertpro=$bdd->prepare('UPDATE annotation SET pro_s=:s,pro_c=:c,pro_f=:f,pro_p=:p
                         WHERE id_extrait=:id_extrait AND id_utilisateur=:id_utilisateur');
-        $insertpro->execute(array('s'=>$proportions['soutenu'],'c'=>$proportions['courant'],
-            'f'=>$proportions['familier'],'p'=>$proportions['poubelle'],
+        $insertpro->execute(array('s'=>$anno_pro['soutenu'],'c'=>$anno_pro['courant'],
+            'f'=>$anno_pro['familier'],'p'=>$anno_pro['poubelle'],
             'id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur));
         $insertpro->closeCursor();
-        # à faire : essayer de le réaliser dans un boucle
-
         # Insertion de descripteurs par registre
-        $registres=array("soutenu","courant","familier","poubelle");
+        $regs=array("soutenu","courant","familier","poubelle");
         $reg_descrips=array();
-        foreach ($registres as $registre) {
-            $reg_descrips[$registre]=implode(";",$registre_descripteurs[$registre]);
+        foreach ($regs as $reg) {
+            $reg_descrips[$reg]=implode(";",$anno_des[$reg]);
         }
         $insertdes=$bdd->prepare('UPDATE annotation SET des_s=:s,des_c=:c,des_f=:f,des_p=:p
                         WHERE id_extrait=:id_extrait AND id_utilisateur=:id_utilisateur');
@@ -248,10 +308,18 @@ $id_extrait=$extrait['id_extrait'];
             'f'=>$reg_descrips['familier'],'p'=>$reg_descrips['poubelle'],
             'id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur));
         $insertdes->closeCursor();
-        # à faire : insertion de problèmes signalés
+        # Insertion de problèmes signalés
+        if ($problemes) {
+            $pblm=implode(";",$problemes);
+            $insertpblm=$bdd->prepare('UPDATE annotation SET problemes=:problemes
+                    WHERE id_extrait=:id_extrait AND id_utilisateur=:id_utilisateur');
+            $insertpblm->execute(array('problemes'=>$pblm,'id_extrait'=>$id_extrait,'id_utilisateur'=>$id_utilisateur));
+            $insertpblm->closeCursor();
+        }
         echo "<script>location.href='page_annotation.php';</script>";
     }
-    ?>
+
+?>
     <!-- JS Scripts-->
     <!-- jQuery Js -->
     <script src="assets/js/jquery-1.10.2.js"></script>
