@@ -7,7 +7,7 @@ session_start();
     $identification=$bdd->prepare('SELECT * FROM utilisateurs WHERE id=:id');
     $identification->execute(array('id'=>$id_utilisateur));
     $userinfo=$identification->fetch();
-    $identification->closeCursor;
+    $identification->closeCursor();
     $nom=$userinfo['nom'];
     $prenom=$userinfo['prenom'];
 ?>
@@ -59,12 +59,86 @@ session_start();
         <div id="page-wrapper">
             <div class="header">
                 <h1 class="page-header">
-                    VISUALISATION - L'ACCORD INTER ANNOTATEUR
+                    Visualisation - l'accord inter annotateur
                 </h1>
             </div>
             <div id="page-inner">
                 <?php
-                    kappa($id_utilisateur, $bdd);
+                    # Vérifier si tous les extraits sont bien annotés
+                    $interrogevalidite=$bdd->prepare('SELECT min(validite) FROM annotation 
+                                    WHERE id_utilisateur=:id_utilisateur');
+                    $interrogevalidite->execute(array('id_utilisateur'=>$id_utilisateur));
+                    $validite=$interrogevalidite->fetch();
+                    $interrogevalidite->closeCursor();
+                    if ($validite[0]==0) {
+                        echo "
+                            <div class=\"alert alert-warning\">
+                                Veuillez refaire les annotations invalides avant de passer à la visualisation.
+                            </div>
+                        ";
+                    }
+                    else {
+                        $infoadmin=infoAdmin($bdd);
+                        $id_admin=$infoadmin['id'];
+                        if ($id_admin==$id_utilisateur) {
+                            $interrogeannotateurs=$bdd->query('SELECT * FROM utilisateurs 
+                                    WHERE statut=\'annotateur\'');
+                            while ($infoannotateur=$interrogeannotateurs->fetch()) {
+                                $id_annotateur=$infoannotateur['id'];
+                                $nom_annotateur=$infoannotateur['nom'];
+                                $prenom_annotateur=$infoannotateur['prenom'];
+                                echo strtoupper($nom_annotateur)." ".ucfirst($prenom_annotateur)."<br>";
+                            }
+                            $interrogeannotateurs->closeCursor();
+                            echo "<p>VISUALISATION DE L'ACCORD POUR L'ADMIN A FAIRE !!!</p>";
+                        }
+                        else {
+                            $nom_admin = $infoadmin['nom'];
+                            $prenom_admin = $infoadmin['prenom'];
+                            $f = calculFmesure($bdd, $id_admin, $id_utilisateur);
+                            $rappel = round($f[0], 2);
+                            $precision = round($f[1], 2);
+                            $fmesure = round($f[2], 2);
+                            $kappa = round(calculKappa($bdd, $id_admin, $id_utilisateur), 2);
+                            echo "
+                        <div classe=\"row\">
+                            <div class=\"col-sm-6 col-md-3\">
+                                <div class=\"card-panel text-center\">
+                                    <h3>Rappel</h3><br>
+                                    <div class=\"easypiechart\" id=\"easypiechart-blue\" data-percent=" . strval($rappel * 100) . " >
+                                    <span class=\"percent\">$rappel</span>
+                                    </div>                            
+                                </div>
+                            </div>
+                            <div class=\"col-sm-6 col-md-3\">
+                                <div class=\"card-panel text-center\">
+                                    <h3>Précision</h3><br>
+                                    <div class=\"easypiechart\" id=\"easypiechart-red\" data-percent=" . strval($precision * 100) . " >
+                                    <span class=\"percent\">$precision</span>
+                                    </div>                            
+                                </div>
+                            </div>
+                            <div class=\"col-sm-6 col-md-3\">
+                                <div class=\"card-panel text-center\">
+                                    <h3>F-mesure</h3><br>
+                                    <div class=\"easypiechart\" id=\"easypiechart-teal\" data-percent=" . strval($fmesure * 100) . " >
+                                    <span class=\"percent\">$fmesure</span>
+                                    </div>                            
+                                </div>
+                            </div>
+                            <div class=\"col-sm-6 col-md-3\">
+                                <div class=\"card-panel text-center\">
+                                    <h3>Kappa</h3><br>
+                                    <div class=\"easypiechart\" id=\"easypiechart-orange\" data-percent=" . strval($kappa * 100) . " >
+                                    <span class=\"percent\">$kappa</span>
+                                    </div>                            
+                                </div>
+                            </div>
+                        </div>
+                        <p>*Référence : " . strtoupper($nom_admin) . " " . ucfirst($prenom_admin) . "</p>
+                        ";
+                        }
+                    }
                 ?>
             </div>
             <!-- /. PAGE INNER  -->
@@ -121,87 +195,98 @@ session_start();
 
     </body>
 </html>
+
 <?php
-    function kappa($user_id, $bdd){
-        $ref = 	21912371;
-        $annotationRef = array();
-        $annotationNotRef = array();
-        $query = 'SELECT id_extrait, id_utilisateur, pro_s, pro_c, pro_f, pro_p FROM annotation WHERE id_utilisateur LIKE '.$user_id." OR id_utilisateur LIKE ".$ref;
-        $annotation = $bdd->query($query);
-        while ($data = $annotation -> fetch()){
-            if ($data['id_utilisateur']==$ref){
-                $annotationRef[$data['id_extrait']] = $data['pro_s'].$data['pro_c'].$data['pro_f'].$data['pro_p'];
-            }
-            else {$annotationNotRef[$data['id_extrait']] = $data['pro_s'].$data['pro_c'].$data['pro_f'].$data['pro_p'];}
-        }
-
-        if (count($annotationNotRef)==count($annotationRef)){
-            echo "oking";
-            probabilite_accord($annotationRef, $annotationNotRef);
-        }
-        else {echo "<p>Il est possible que vous n'ayez pas encore terminé votre annotation.</p>";}
-        $annotation -> closeCursor();
+    function infoAdmin($bdd) {
+        $interrogeadmin=$bdd->query('SELECT * FROM utilisateurs WHERE statut=\'admin\'');
+        $infoadmin=$interrogeadmin->fetch();
+        $interrogeadmin->closeCursor();
+        return $infoadmin;
     }
-    
-    function probabilite_accord($ref, $annot){
-        $grand_matrice = array("S"=>array(),"C"=>array(),"F"=>array(),"P"=>array());
-        // print_r($grand_matrice);
-        $registres = array(0 => "S", 1=>"C",2=>"F",3=>"P");
-        $proportion = array(0=>0, 1=>0.25, 2=>0.5, 3=>0.75, 4=>1);
-        $total = 0;
-        for ($i=1; $i < count($ref)+1;$i++){ # pour chaque extrait
-            // echo $ref[$i],"/",$annot[$i],"<br>";
-            $temp_array_r=array();
-            $temp_array_a=array();
-            for ($x=0;$x<count($registres);$x++){ #pour chaque registre
-                array_push($temp_array_r, $proportion[$ref[$i][$x]]);
-                array_push($temp_array_a, $proportion[$annot[$i][$x]]);
+    function getAnno($bdd,$id) {
+        $interroge=$bdd->prepare('SELECT id_extrait,pro_s,pro_c,pro_f,pro_p FROM annotation 
+                        WHERE id_utilisateur=:id');
+        $interroge->execute(array('id'=>$id));
+        $anno=$interroge->setFetchMode(PDO::FETCH_ASSOC);
+        $anno=$interroge->fetchAll();
+        $interroge->closeCursor();
+        return $anno;
+    }
+    function getAccord($bdd,$idref,$ideva) {
+        $anno1=getAnno($bdd,$idref);
+        $anno2=getAnno($bdd,$ideva);
+        $regs=array('pro_s','pro_c','pro_f','pro_p');
+        $accord=array('pro_s'=>0,'pro_c'=>0,'pro_f'=>0,'pro_p'=>0);
+        $i=1;
+        while ($i<=count($anno1)) {
+            foreach ($regs as $reg) {
+                $accord[$reg]+=min($anno1[$i-1][$reg],$anno2[$i-1][$reg]);
             }
-
-            for ($y=0;$y<count($registres);$y++){
-                if ($temp_array_r[$y]==$temp_array[$y]){ # Si soutenu r 0,25 soutenu a 0,25
-                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_r[$y]; #si le même résultat dans les deux, on garde
-                }
-                elseif ($temp_array_r[$y] < $temp_array_a[$y] && $temp_array_r[$y]!=0){ #soutenu r 0,25 soutenu a 0,5
-                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_r[$y] ;
-                    $temp_annot = $temp_array_a[$y]-$temp_array_r[$y];
-                    try{
-                        if ($temp_array_r[$y+1] != $temp_array_a[$y+1] && $temp_array_r[$y+1] == $temp_annot){ # courant r 25 soutenu a 25
-                            $grand_matrice[$registres[$y]][$registres[$y+1]] += $temp_annot;
-                        } 
-                        #apparemment il manque les cas comme 
-                        #courant r 50 > soutenu a 25 
-                        #courant r < soutenu a 
-                        elseif ($temp_array_r[$y+2] != $temp_array_a[$y+2] && $temp_array_r[$y+2] == $temp_annot){ # familier r 25 soutenu a 25
-                            $grand_matrice[$registres[$y]][$registres[$y+2]] += $temp_annot;
-                        }
-                        elseif ($temp_array_r[$y+3] != $temp_array_a[$y+3] && $temp_array_r[$y+3] == $temp_annot){ # poubelle r 25 soutenu a 25
-                            $grand_matrice[$registres[$y]][$registres[$y+3]] += $temp_annot;
-                        }
-                    } catch (Exception $e){
-                        echo 'Exception reçue : ',  $e->getMessage(), "\n";
-                    }
-                }
-                elseif ($temp_array_r[$y] > $temp_array_a[$y] && $temp_array_r[$y]!=0){ # soutenu r 0,5 soutenu a 0,25
-                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_a[$y] ;
-                    $temp_annot = $temp_array_r[$y]-$temp_array_a[$y];
-                    try{
-                        if ($temp_array_r[$y+1] != $temp_array_a[$y+1] && $temp_array_a[$y+1] == $temp_annot){ # soutenu r 25 courant a 25
-                            $grand_matrice[$registres[$y+1]][$registres[$y]] += $temp_annot;
-                        }
-                        elseif ($temp_array_r[$y+2] != $temp_array_a[$y+2] && $temp_array_a[$y+2] == $temp_annot){ # soutenu r 25 familier a 25
-                            $grand_matrice[$registres[$y+2]][$registres[$y]] += $temp_annot;
-                        }
-                        elseif ($temp_array_r[$y+3] != $temp_array_a[$y+3] && $temp_array_a[$y+3] == $temp_annot){ # soutenu r 25 familier a 25
-                            $grand_matrice[$registres[$y+3]][$registres[$y]] += $temp_annot;
-                        }
-                    } catch (Exception $e){
-                        echo 'Exception reçue : ',  $e->getMessage(), "\n";
-                    }
-                }
+            $i++;
+        }
+        return $accord;
+    }
+    function getSum($bdd,$idref,$ideva) {
+        $interrogeSum=$bdd->prepare('SELECT SUM(pro_s) AS s,SUM(pro_c) AS c,SUM(pro_f) AS f,SUM(pro_p) AS p FROM annotation 
+                                WHERE id_utilisateur IN (:id1,:id2) GROUP BY id_utilisateur');
+        $interrogeSum->execute(array('id1'=>$idref,'id2'=>$ideva));
+        $sommepro=$interrogeSum->setFetchMode(PDO::FETCH_ASSOC);
+        $sommepro=$interrogeSum->fetchAll();
+        $interrogeSum->closeCursor();
+        return $sommepro;
+    }
+    function calculFmesure($bdd,$idref,$ideva) {
+        $annoref=getAnno($bdd,$idref);
+        $somme=getSum($bdd,$idref,$ideva);
+        $total=4*count($annoref);
+        $accord=getAccord($bdd,$idref,$ideva);
+        $regs=array('s','c','f','p');
+        $vp=array();
+        $r=array();
+        $p=array();
+        $fm=array();
+        foreach ($regs as $reg) {
+            $vp[$reg]=$accord['pro_'.$reg];
+            if ($somme[0][$reg]==0) {
+                $r[$reg]=1;
+            }
+            else {
+                $r[$reg]=$vp[$reg]/$somme[0][$reg];
+            }
+            if ($somme[1][$reg]==0) {
+                $p[$reg]=1;
+            }
+            else {
+                $p[$reg]=$vp[$reg]/$somme[1][$reg];
+            }
+            if ($r[$reg]==0 or $p[$reg]==0) {
+                $fm[$reg]=1;
+            }
+            else {
+                $fm[$reg]=2*$p[$reg]*$r[$reg]/($p[$reg]+$r[$reg]);
             }
         }
-        echo $total ;
-        print_r($grand_matrice);
+        $rappel=array_sum($r)/4;
+        $precision=array_sum($p)/4;
+        $fmesure=array_sum($fm)/4;
+        return array($rappel,$precision,$fmesure);
     }
+    function calculKappa($bdd,$idref,$ideva) {
+        $anno1=getAnno($bdd,$idref);
+        $total=4*count($anno1);
+        # Calcul de Probabilité d'accord (Pa)
+        $accord=getAccord($bdd,$idref,$ideva);
+        $pa=array_sum($accord)/$total;
+        # Calcul de Probabilité d'accord simultané (Pe)
+        $pe=0;
+        $somme=getSum($bdd,$idref,$ideva);
+        foreach (array('s','c','f','p') as $reg) {
+            $pe+=($somme[0][$reg]/$total)*($somme[1][$reg]/$total);
+        }
+        # Calcul du kappa
+        $k=($pa-$pe)/(1-$pe);
+        return $k;
+    }
+
 ?>
+
