@@ -64,7 +64,7 @@ session_start();
             </div>
             <div id="page-inner">
                 <?php
-
+                    kappa($id_utilisateur, $bdd);
                 ?>
             </div>
             <!-- /. PAGE INNER  -->
@@ -121,3 +121,87 @@ session_start();
 
     </body>
 </html>
+<?php
+    function kappa($user_id, $bdd){
+        $ref = 	21912371;
+        $annotationRef = array();
+        $annotationNotRef = array();
+        $query = 'SELECT id_extrait, id_utilisateur, pro_s, pro_c, pro_f, pro_p FROM annotation WHERE id_utilisateur LIKE '.$user_id." OR id_utilisateur LIKE ".$ref;
+        $annotation = $bdd->query($query);
+        while ($data = $annotation -> fetch()){
+            if ($data['id_utilisateur']==$ref){
+                $annotationRef[$data['id_extrait']] = $data['pro_s'].$data['pro_c'].$data['pro_f'].$data['pro_p'];
+            }
+            else {$annotationNotRef[$data['id_extrait']] = $data['pro_s'].$data['pro_c'].$data['pro_f'].$data['pro_p'];}
+        }
+
+        if (count($annotationNotRef)==count($annotationRef)){
+            echo "oking";
+            probabilite_accord($annotationRef, $annotationNotRef);
+        }
+        else {echo "<p>Il est possible que vous n'ayez pas encore terminé votre annotation.</p>";}
+        $annotation -> closeCursor();
+    }
+    
+    function probabilite_accord($ref, $annot){
+        $grand_matrice = array("S"=>array(),"C"=>array(),"F"=>array(),"P"=>array());
+        // print_r($grand_matrice);
+        $registres = array(0 => "S", 1=>"C",2=>"F",3=>"P");
+        $proportion = array(0=>0, 1=>0.25, 2=>0.5, 3=>0.75, 4=>1);
+        $total = 0;
+        for ($i=1; $i < count($ref)+1;$i++){ # pour chaque extrait
+            // echo $ref[$i],"/",$annot[$i],"<br>";
+            $temp_array_r=array();
+            $temp_array_a=array();
+            for ($x=0;$x<count($registres);$x++){ #pour chaque registre
+                array_push($temp_array_r, $proportion[$ref[$i][$x]]);
+                array_push($temp_array_a, $proportion[$annot[$i][$x]]);
+            }
+
+            for ($y=0;$y<count($registres);$y++){
+                if ($temp_array_r[$y]==$temp_array[$y]){ # Si soutenu r 0,25 soutenu a 0,25
+                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_r[$y]; #si le même résultat dans les deux, on garde
+                }
+                elseif ($temp_array_r[$y] < $temp_array_a[$y] && $temp_array_r[$y]!=0){ #soutenu r 0,25 soutenu a 0,5
+                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_r[$y] ;
+                    $temp_annot = $temp_array_a[$y]-$temp_array_r[$y];
+                    try{
+                        if ($temp_array_r[$y+1] != $temp_array_a[$y+1] && $temp_array_r[$y+1] == $temp_annot){ # courant r 25 soutenu a 25
+                            $grand_matrice[$registres[$y]][$registres[$y+1]] += $temp_annot;
+                        } 
+                        #apparemment il manque les cas comme 
+                        #courant r 50 > soutenu a 25 
+                        #courant r < soutenu a 
+                        elseif ($temp_array_r[$y+2] != $temp_array_a[$y+2] && $temp_array_r[$y+2] == $temp_annot){ # familier r 25 soutenu a 25
+                            $grand_matrice[$registres[$y]][$registres[$y+2]] += $temp_annot;
+                        }
+                        elseif ($temp_array_r[$y+3] != $temp_array_a[$y+3] && $temp_array_r[$y+3] == $temp_annot){ # poubelle r 25 soutenu a 25
+                            $grand_matrice[$registres[$y]][$registres[$y+3]] += $temp_annot;
+                        }
+                    } catch (Exception $e){
+                        echo 'Exception reçue : ',  $e->getMessage(), "\n";
+                    }
+                }
+                elseif ($temp_array_r[$y] > $temp_array_a[$y] && $temp_array_r[$y]!=0){ # soutenu r 0,5 soutenu a 0,25
+                    $grand_matrice[$registres[$y]][$registres[$y]] += $temp_array_a[$y] ;
+                    $temp_annot = $temp_array_r[$y]-$temp_array_a[$y];
+                    try{
+                        if ($temp_array_r[$y+1] != $temp_array_a[$y+1] && $temp_array_a[$y+1] == $temp_annot){ # soutenu r 25 courant a 25
+                            $grand_matrice[$registres[$y+1]][$registres[$y]] += $temp_annot;
+                        }
+                        elseif ($temp_array_r[$y+2] != $temp_array_a[$y+2] && $temp_array_a[$y+2] == $temp_annot){ # soutenu r 25 familier a 25
+                            $grand_matrice[$registres[$y+2]][$registres[$y]] += $temp_annot;
+                        }
+                        elseif ($temp_array_r[$y+3] != $temp_array_a[$y+3] && $temp_array_a[$y+3] == $temp_annot){ # soutenu r 25 familier a 25
+                            $grand_matrice[$registres[$y+3]][$registres[$y]] += $temp_annot;
+                        }
+                    } catch (Exception $e){
+                        echo 'Exception reçue : ',  $e->getMessage(), "\n";
+                    }
+                }
+            }
+        }
+        echo $total ;
+        print_r($grand_matrice);
+    }
+?>
