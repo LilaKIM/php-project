@@ -80,61 +80,100 @@ session_start();
                     else {
                         $infoadmin=infoAdmin($bdd);
                         $id_admin=$infoadmin['id'];
+                        $nom_admin = $infoadmin['nom'];
+                        $prenom_admin = $infoadmin['prenom'];
                         if ($id_admin==$id_utilisateur) {
+                            echo "
+                                <div class=\"col-md-12\">
+                                    <div class=\"card\">
+                                        <div class=\"card-content\">
+                                            <div class=\"table-responsive\">
+                                                <table class=\"table\">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Nom</th>
+                                                            <th>Rappel</th>
+                                                            <th>Précision</th>
+                                                            <th>F-mesure</th>
+                                                            <th>Kappa</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                            ";
                             $interrogeannotateurs=$bdd->query('SELECT * FROM utilisateurs 
                                     WHERE statut=\'annotateur\'');
                             while ($infoannotateur=$interrogeannotateurs->fetch()) {
                                 $id_annotateur=$infoannotateur['id'];
                                 $nom_annotateur=$infoannotateur['nom'];
                                 $prenom_annotateur=$infoannotateur['prenom'];
-                                echo strtoupper($nom_annotateur)." ".ucfirst($prenom_annotateur)."<br>";
+                                $f = calculFmesure($bdd, $id_admin, $id_annotateur);
+                                $rappel = round($f[0], 2);
+                                $precision = round($f[1], 2);
+                                $fmesure = round(2*$rappel*$precision/($rappel+$precision), 2);
+                                $kappa = round(calculKappa($bdd, $id_admin, $id_annotateur), 2);
+                                echo "
+                                                        <tr>
+                                                            <td>$id_annotateur</td>
+                                                            <td>".strtoupper($nom_annotateur)." ".ucfirst($prenom_annotateur)."</td>
+                                                            <td>$rappel</td>
+                                                            <td>$precision</td>
+                                                            <td>$fmesure</td>
+                                                            <td>$kappa</td>
+                                                        </tr>
+                                ";
                             }
                             $interrogeannotateurs->closeCursor();
-                            echo "<p>VISUALISATION DE L'ACCORD POUR L'ADMIN A FAIRE !!!</p>";
+                            echo "
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ";
                         }
                         else {
-                            $nom_admin = $infoadmin['nom'];
-                            $prenom_admin = $infoadmin['prenom'];
                             $f = calculFmesure($bdd, $id_admin, $id_utilisateur);
                             $rappel = round($f[0], 2);
                             $precision = round($f[1], 2);
-                            $fmesure = round($f[2], 2);
+                            $fmesure = round(2*$rappel*$precision/($rappel+$precision), 2);
                             $kappa = round(calculKappa($bdd, $id_admin, $id_utilisateur), 2);
                             echo "
-                        <div classe=\"row\">
-                            <div class=\"col-sm-6 col-md-3\">
-                                <div class=\"card-panel text-center\">
-                                    <h3>Rappel</h3><br>
-                                    <div class=\"easypiechart\" id=\"easypiechart-blue\" data-percent=" . strval($rappel * 100) . " >
-                                    <span class=\"percent\">$rappel</span>
-                                    </div>                            
+                            <div classe=\"row\">
+                                <div class=\"col-sm-6 col-md-3\">
+                                    <div class=\"card-panel text-center\">
+                                        <h3>Rappel</h3><br>
+                                        <div class=\"easypiechart\" id=\"easypiechart-blue\" data-percent=" . strval($rappel * 100) . " >
+                                        <span class=\"percent\">$rappel</span>
+                                        </div>                            
+                                    </div>
+                                </div>
+                                <div class=\"col-sm-6 col-md-3\">
+                                    <div class=\"card-panel text-center\">
+                                        <h3>Précision</h3><br>
+                                        <div class=\"easypiechart\" id=\"easypiechart-red\" data-percent=" . strval($precision * 100) . " >
+                                        <span class=\"percent\">$precision</span>
+                                        </div>                            
+                                    </div>
+                                </div>
+                                <div class=\"col-sm-6 col-md-3\">
+                                    <div class=\"card-panel text-center\">
+                                        <h3>F-mesure</h3><br>
+                                        <div class=\"easypiechart\" id=\"easypiechart-teal\" data-percent=" . strval($fmesure * 100) . " >
+                                        <span class=\"percent\">$fmesure</span>
+                                        </div>                            
+                                    </div>
+                                </div>
+                                <div class=\"col-sm-6 col-md-3\">
+                                    <div class=\"card-panel text-center\">
+                                        <h3>Kappa</h3><br>
+                                        <div class=\"easypiechart\" id=\"easypiechart-orange\" data-percent=" . strval($kappa * 100) . " >
+                                        <span class=\"percent\">$kappa</span>
+                                        </div>                            
+                                    </div>
                                 </div>
                             </div>
-                            <div class=\"col-sm-6 col-md-3\">
-                                <div class=\"card-panel text-center\">
-                                    <h3>Précision</h3><br>
-                                    <div class=\"easypiechart\" id=\"easypiechart-red\" data-percent=" . strval($precision * 100) . " >
-                                    <span class=\"percent\">$precision</span>
-                                    </div>                            
-                                </div>
-                            </div>
-                            <div class=\"col-sm-6 col-md-3\">
-                                <div class=\"card-panel text-center\">
-                                    <h3>F-mesure</h3><br>
-                                    <div class=\"easypiechart\" id=\"easypiechart-teal\" data-percent=" . strval($fmesure * 100) . " >
-                                    <span class=\"percent\">$fmesure</span>
-                                    </div>                            
-                                </div>
-                            </div>
-                            <div class=\"col-sm-6 col-md-3\">
-                                <div class=\"card-panel text-center\">
-                                    <h3>Kappa</h3><br>
-                                    <div class=\"easypiechart\" id=\"easypiechart-orange\" data-percent=" . strval($kappa * 100) . " >
-                                    <span class=\"percent\">$kappa</span>
-                                    </div>                            
-                                </div>
-                            </div>
-                        </div>
                         <p>*Référence : " . strtoupper($nom_admin) . " " . ucfirst($prenom_admin) . "</p>
                         ";
                         }
@@ -248,28 +287,21 @@ session_start();
         foreach ($regs as $reg) {
             $vp[$reg]=$accord['pro_'.$reg];
             if ($somme[0][$reg]==0) {
-                $r[$reg]=1;
+                $r[$reg]=0.5;
             }
             else {
                 $r[$reg]=$vp[$reg]/$somme[0][$reg];
             }
             if ($somme[1][$reg]==0) {
-                $p[$reg]=1;
+                $p[$reg]=0.5;
             }
             else {
                 $p[$reg]=$vp[$reg]/$somme[1][$reg];
             }
-            if ($r[$reg]==0 or $p[$reg]==0) {
-                $fm[$reg]=1;
-            }
-            else {
-                $fm[$reg]=2*$p[$reg]*$r[$reg]/($p[$reg]+$r[$reg]);
-            }
         }
         $rappel=array_sum($r)/4;
         $precision=array_sum($p)/4;
-        $fmesure=array_sum($fm)/4;
-        return array($rappel,$precision,$fmesure);
+        return array($rappel,$precision);
     }
     function calculKappa($bdd,$idref,$ideva) {
         $anno1=getAnno($bdd,$idref);
