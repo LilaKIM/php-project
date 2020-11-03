@@ -286,18 +286,8 @@ session_start();
         $fm=array();
         foreach ($regs as $reg) {
             $vp[$reg]=$accord['pro_'.$reg];
-            if ($somme[0][$reg]==0) {
-                $r[$reg]=0.5;
-            }
-            else {
-                $r[$reg]=$vp[$reg]/$somme[0][$reg];
-            }
-            if ($somme[1][$reg]==0) {
-                $p[$reg]=0.5;
-            }
-            else {
-                $p[$reg]=$vp[$reg]/$somme[1][$reg];
-            }
+            $r[$reg]=$vp[$reg]/$somme[0][$reg];
+            $p[$reg]=$vp[$reg]/$somme[1][$reg];
         }
         $rappel=array_sum($r)/4;
         $precision=array_sum($p)/4;
@@ -319,6 +309,5 @@ session_start();
         $k=($pa-$pe)/(1-$pe);
         return $k;
     }
-
 ?>
 
