@@ -16,7 +16,7 @@ session_start();
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Visualisation l'accord inter annotateur</title>
+        <title>Visualisation d'annotation</title>
         <link rel="shortcut icon" href="images/icone.png"/>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link rel="stylesheet" href="assets/materialize/css/materialize.min.css" media="screen,projection" />
@@ -78,7 +78,7 @@ session_start();
             echo "
             <form method=\"post\">
                 <INPUT type=\"submit\" class=\"waves-effect waves-light red lighten-2 btn\" name=\"proportion\" value=\"Proportion\" >
-                <INPUT type=\"submit\" class=\"waves-effect waves-light red lighten-2 btn\" name=\"taille_text\" value=\"Taille du text\">
+                <INPUT type=\"submit\" class=\"waves-effect waves-light red lighten-2 btn\" name=\"taille_text\" value=\"Taille du texte\">
                 <INPUT type=\"submit\" class=\"waves-effect waves-light red lighten-2 btn\" name=\"descripteurs\" value=\"Descripteurs\" >
             </form>";
             
@@ -198,11 +198,13 @@ session_start();
 						<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_deroulant[$i]\" value=\"$menu_deroulant[$i]\"><label for=\"$menu_deroulant[$i]\">".$menu_deroulant[$i]."</label><br>";
                     }
                     else {
-                        echo "<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_deroulant[$i]\" value=\"$menu_deroulant[$i]\" checked><label for=\"$menu_deroulant[$i]\">".$menu_deroulant[$i]."</label><br>";
+                        echo "<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_deroulant[$i]\" value=\"$menu_deroulant[$i]\"><label for=\"$menu_deroulant[$i]\">".$menu_deroulant[$i]."</label><br>";
                     }
                 }
                 echo "</b></p><INPUT type=\"text\" name=\"value_length\" value=\"Ex) 10,50\"><br><INPUT class=\"waves-effect waves-light red lighten-2 btn\" type=\"submit\" name=\"research_nb\" value=\"Rechercher\"></form>";
+                
                 if (isset($_GET['research_nb'])){
+                    
 					$id_extrait =array();
                     $titre = array();
                     $length = $_GET['value_length'];
@@ -266,25 +268,28 @@ session_start();
 
             function descripteurs($id_utilisateur, $statut, $bdd){
                 $descripteurs=$bdd->query('SELECT id_descripteur, descripteur FROM descripteurs');
-                echo "<form method=\"post\"><table>";
+                echo "<form method=\"post\"><p><b>";
                 while ($descrips=$descripteurs->fetch()) {
-                    echo "<tr><td><INPUT type=\"checkbox\" name=\"descripteurs[]\" value=".$descrips['id_descripteur'].">".$descrips['descripteur']."</td></tr><tr>";
+                    echo "<INPUT type=\"checkbox\" name=\"descripteurs[]\" class=\"filled-in\" id=".$descrips['id_descripteur']." value=".$descrips['id_descripteur']."><label for=".$descrips['id_descripteur'].">".$descrips['descripteur']."</label><br>";
                 }
+				 echo "</b></p>";
                 $descripteurs->closeCursor();
 
-                if ($statut == 'admin'){
+				if ($statut == 'admin'){
                     $users_id=array();
                     $users = $bdd->query('SELECT * FROM utilisateurs WHERE statut LIKE "annotateur"') or die(print_r($bdd->errorInfo()));;
                     while ($data = $users->fetch()){$users_id[$data['id']] = strtoupper($data['nom'])." ".ucfirst($data['prenom'])." (".$data['id'].")";}
                     // print_r($users_id);
                     $users -> closeCursor();
-                    echo "<td><SELECT name=\"user_id\">";  
+                    echo "<p><b>Avec l'annotation de :<br>";  
                     foreach ($users_id as $key => $value){
-                        echo "<OPTION value=".$key.">".$value."</OPTION>";
+                        echo "
+						<INPUT class=\"red lighten-2\" type=\"radio\" name=\"user_id\" id =\"$value\" value=\"$key\"><label for=\"$value\">".$value."</label><br>
+						";
                     }
-                    echo "</SELECT></td>";
+                    echo "</b></p>";
                 }
-                echo "<td><INPUT type=\"submit\" name=\"research_desc\" value=\"Rechercher\"></td></tr></table></form>";
+                echo "<INPUT class=\"waves-effect waves-light red lighten-2 btn\" type=\"submit\" name=\"research_desc\" value=\"Rechercher\"></form>";
                 if (isset($_POST['research_desc'])){
                     if ($_POST['user_id']){
                         $id_utilisateur = $_POST['user_id'];
@@ -321,14 +326,7 @@ session_start();
                 }
             }
 
-            function menu_auto($rubriques_possibles){
-                $rubs = explode(", ", $rubriques_possibles);
-                echo "<table><tr>";
-                foreach($rubs as $value){
-                    echo "<td><a href=\"page_".$value.".php\">".ucfirst($value)."</a></td>";
-                }
-                echo "</tr></table>";
-            }
+           
         ?>
     </div>
             <!-- /. PAGE INNER  -->
