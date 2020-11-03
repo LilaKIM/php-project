@@ -101,7 +101,8 @@ session_start();
                                 </div>
                             </form>
                         </div>
-                      ";
+                        ";
+                        issues($bdd);
                     }
                     if ($_FILES["file"]["error"] > 0) {
                         echo "
@@ -248,5 +249,50 @@ session_start();
         }
     }
 
+    function issues($bdd)
+    {
+        $issues = array();
+        $response = $bdd->query('SELECT id_extrait, id_utilisateur, problemes FROM annotation WHERE problemes NOT LIKE ""') or die(print_r($bdd->errorInfo()));
+        while ($data = $response->fetch()) {
+            $issues[$data['id_extrait'] . ";" . $data['id_utilisateur']] = $data['problemes'];
+        }
+        $response->closeCursor();
+        echo "
+            <div class=\"col-md-12\">
+                <div class=\"card\">
+                    <div class=\"card-action\">
+                        Problèmes signalés
+                    </div>
+                    <div class=\"card-content\">
+                        <div class=\"table-responsive\">
+                            <table class=\"table\">
+                                <thead>
+                                    <tr>
+                                        <th>N° extrait</th>
+                                        <th>Utilisateur</th>
+                                        <th>Problème(s)</th>
+                                        <th>Extrait</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+        ";
+        if (!$issues) {
+            echo "</tbody></table>";
+        } else {
+            foreach ($issues as $key => $value) {
+                $pos = strpos($key, ";");
+                $id_extrait = substr($key, 0, $pos);
+                $id_user = substr($key, $pos + 1, strlen($key));
+                echo "<tr><td>" . $id_extrait . "</td><td>" . $id_user . "</td><td>" . $value . "</td>";
+                $extrait_issues = $bdd->query('SELECT * FROM corpus WHERE id_extrait LIKE ' . $id_extrait);
+                while ($corpus = $extrait_issues->fetch()) {
+                    echo "<td>" . $corpus['extrait'] . "</td></tr>";
+                }
+                $extrait_issues->closeCursor();
+            }
+            echo "</table>";
+        }
+        echo "</div></div></div></div>";
+    }
 ?>
 

@@ -150,7 +150,7 @@ body{
   border: none;
 }
 .forgot input[type="submit"]:hover {
-	background:#818181;
+	background: #818181;
 	transition: 0.5s all;
   -webkit-transition: 0.5s all;
   -moz-transition: 0.5s all;

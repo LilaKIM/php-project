@@ -75,7 +75,7 @@ session_start();
                     $texte="Vous avez parcouru tous les extraits.<br>Refaites ce qui sont invalides, puis procédez à la visualisation.";
                 }
                 else {
-                    $texte=$extrait['extrait'];
+                    $texte=joliTexte($extrait['extrait']);
                     $id_extrait=$extrait['id_extrait'];
                 }
             ?>
@@ -124,7 +124,7 @@ session_start();
                                 <p><b>Signaler un problèmes :</b></p><br>
                                 <input type="checkbox" class="filled-in" id="errid1" name="problemes[]" value="erreur de formatage" form="form"/>
                                 <label for="errid1">Erreur de formatage</label>
-                                <input type="checkbox" class="filled-in" id="errid2" name="problemes[]" value="mauvaise qualité de texte" form="form"/>
+                                <input type="checkbox" class="filled-in" id="errid2" name="problemes[]" value="mauvaise qualite de texte" form="form"/>
                                 <label for="errid2">Mauvaise qualité de texte</label>
                                 <div class="input-field col s12">
                                 <input id="autre" name="autreprobleme" type="text" class="validate" form="form">
@@ -339,3 +339,13 @@ session_start();
     
     </body>
 </html>
+
+<?php
+    function italic($matches) {
+        return "<i>$matches[0]</i>";
+    }
+    function joliTexte($str) {
+        return preg_replace_callback(array("|(#[^ ]+)|","|(@[^ ]+)|","|(https://t.co/[^ ]+)|"),"italic",$str);
+    }
+
+?>

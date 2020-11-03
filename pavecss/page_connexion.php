@@ -21,7 +21,7 @@ session_start();
             <h1>Bienvenue !</h1>
             <?php
                 echo "
-                <form  method=\"post\" action=\"page_accueil.php\">
+                <form method=\"post\" action=\"page_accueil.php\">
                     <input type=\"text\" name=\"nom\" value=\"Nom\" onfocus=\"this.value = '';\" onblur=\"if (this.value == '') {this.value = 'Nom';}\"> 
                     <input type=\"text\" name=\"prenom\" value=\"Prénom\" onfocus=\"this.value = '';\" onblur=\"if (this.value == '') {this.value = 'Prénom';}\">
                     <input type=\"text\" name=\"id\" value=\"Identifiant\" onfocus=\"this.value = '';\" onblur=\"if (this.value == '') {this.value = 'Identifiant';}\">

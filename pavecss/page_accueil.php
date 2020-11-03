@@ -1,9 +1,11 @@
 ﻿<?php
 session_start();
-$_SESSION['nom']=$_POST['nom'];
-$_SESSION['prenom']=$_POST['prenom'];
-$_SESSION['id_utilisateur']=$_POST['id'];
-$_SESSION['mdp']=$_POST['mdp'];
+if ($_POST['mdp']) {
+    $_SESSION['nom'] = $_POST['nom'];
+    $_SESSION['prenom'] = $_POST['prenom'];
+    $_SESSION['id_utilisateur'] = $_POST['id'];
+    $_SESSION['mdp'] = $_POST['mdp'];
+}
 ?>
 <?php
     # Vérification des informations entrées
