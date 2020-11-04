@@ -103,6 +103,7 @@ session_start();
                         </div>
                         ";
                         issues($bdd);
+                        infos_utilisateurs($bdd);
                     }
                     if ($_FILES["file"]["error"] > 0) {
                         echo "
@@ -290,8 +291,37 @@ session_start();
                 }
                 $extrait_issues->closeCursor();
             }
-            echo "</table>";
+            echo "</tbody></table>";
         }
+        echo "</div></div></div></div>";
+    }
+    function infos_utilisateurs($bdd){
+        $response = $bdd->query('SELECT * FROM utilisateurs') or die(print_r($bdd->errorInfo()));
+        echo "
+            <div class=\"col-md-12\">
+                <div class=\"card\">
+                    <div class=\"card-action\">
+                        Problèmes signalés
+                    </div>
+                    <div class=\"card-content\">
+                        <div class=\"table-responsive\">
+                            <table class=\"table\">
+                                <thead>
+                                    <tr>
+                                        <th>Identifiant</th>
+                                        <th>Nom</th>
+                                        <th>Prénom</th>
+                                        <th>Mot de passe</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+        ";
+        while ($data = $response -> fetch()){
+            echo "<tr><td>".$data['id']."</td><td>".$data['nom']."</td><td>".$data['prenom']."</td><td>".$data['mot_de_passe']."</td><td>".$data['statut']."</td></tr>";
+        }
+        $response -> closeCursor();
+        echo "</tbody></table>";
         echo "</div></div></div></div>";
     }
 ?>
