@@ -122,8 +122,8 @@ if ($_POST['mdp']) {
 							 Presentation
 							</div>        
 							 <div class=\"card-content\"> 
-							 <p>Bienvenue à notre site qui est créé dans le cadre d'un projet pour le cours BDD et web dynamique. Nous sommes quatre étudiantes, Tian XIE, Lijing Huang, Young-ju NA et Lila KIM. Le but de ce projet est de construire un site où nous pouvons faire des annotations et les résultats se rendent automatiquement dans une base de donnée. </p>
-							 <p>Pour le moment, nous travaillons sur un corpus qui comprends 200 Tweets et qui est construit par Jade Mekki.</p>
+							 <p>Bienvenue à notre site qui est créé dans le cadre d'un projet pour le cours BDD et web dynamique. Nous sommes quatre étudiantes, Tian XIE, Lijing HUANG, Young-ju NA et Lila KIM. Le but de ce projet est de construire un site où nous pouvons faire des annotations et les résultats se rendent automatiquement dans une base de données. </p>
+							 <p>Pour le moment, nous travaillons sur un corpus qui comprend 200 tweets et qui est construit par Jade Mekki.</p>
 							   <div class=\"clearBoth\"><br/></div>
 								
 							 </div>
