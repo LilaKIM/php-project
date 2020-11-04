@@ -98,7 +98,7 @@ session_start();
 
             # si bouton 'taille text' cliqué : une table des extraits de taille indiquée s'affiche (id n'intervient pas)
             elseif(isset($_POST['taille_text'])){
-                taille_txt($bdd);
+                taille_txt($id_utilisateur,$statut_utilisateur,$bdd);
             }
 
             # si bouton 'descripteurs' cliqué : on a une table des descripteurs à choix multiples
@@ -189,23 +189,41 @@ session_start();
             }
 
 
-            function taille_txt($bdd){
-                $menu_deroulant = array("Chercher les textes dont le nombre de caractères est", "inférieur à", "supérieur à", "entre");
+            function taille_txt($id_utilisateur,$statut, $bdd){
+                $menu_radio = array("Chercher les textes dont le nombre de caractères est", "inférieur à", "supérieur à", "entre");
                 echo "<form method=\"get\"><p><b>";
-                for ($i=1;$i<count($menu_deroulant);$i++){
-                    if ($i!=count($menu_deroulant)-1){
+                for ($i=1;$i<count($menu_radio);$i++){
+                    if ($i!=count($menu_radio)-1){
                         echo "
-						<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_deroulant[$i]\" value=\"$menu_deroulant[$i]\"><label for=\"$menu_deroulant[$i]\">".$menu_deroulant[$i]."</label><br>";
+						<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_radio[$i]\" value=\"$menu_radio[$i]\"><label for=\"$menu_radio[$i]\">".$menu_radio[$i]."</label><br>";
                     }
                     else {
-                        echo "<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_deroulant[$i]\" value=\"$menu_deroulant[$i]\"><label for=\"$menu_deroulant[$i]\">".$menu_deroulant[$i]."</label><br>";
+                        echo "<INPUT class=\"red lighten-2\" type=\"radio\" name=\"choix\" id =\"$menu_radio[$i]\" value=\"$menu_radio[$i]\"><label for=\"$menu_radio[$i]\">".$menu_radio[$i]."</label><br>";
                     }
                 }
-                echo "</b></p><INPUT type=\"text\" name=\"value_length\" value=\"Ex) 10,50\"><br><INPUT class=\"waves-effect waves-light red lighten-2 btn\" type=\"submit\" name=\"research_nb\" value=\"Rechercher\"></form>";
+                echo "</b></p><INPUT type=\"text\" name=\"value_length\" value=\"Ex) 10,50\"><br>";
+                if ($statut == 'admin'){
+                    $users_id=array();
+                    $users = $bdd->query('SELECT * FROM utilisateurs WHERE statut LIKE "annotateur"') or die(print_r($bdd->errorInfo()));;
+                    while ($data = $users->fetch()){$users_id[$data['id']] = strtoupper($data['nom'])." ".ucfirst($data['prenom'])." (".$data['id'].")";}
+                    // print_r($users_id);
+                    $users -> closeCursor();
+                    echo "<p><b>Avec l'annotation de :<br>";  
+                    foreach ($users_id as $key => $value){
+                        echo "
+						<INPUT class=\"red lighten-2\" type=\"radio\" name=\"user_id\" id =\"$value\" value=\"$key\"><label for=\"$value\">".$value."</label><br>
+						";
+                    }
+                    echo "</b></p>";
+                }
+                echo "<INPUT class=\"waves-effect waves-light red lighten-2 btn\" type=\"submit\" name=\"research_nb\" value=\"Rechercher\"></form>";
                 
                 if (isset($_GET['research_nb'])){
-                    
-					$id_extrait =array();
+                    if ($_GET['user_id']){
+                        $id_utilisateur = $_GET['user_id'];
+                    }
+                    $temp_id = array();
+					$id_extrait_arr =array();
                     $titre = array();
                     $length = $_GET['value_length'];
                     $choix = array("inférieur à", "supérieur à", "entre");
@@ -214,22 +232,22 @@ session_start();
                     if ($choix_nb == "inférieur à") { # Si inf
                         while ($data = $annotation->fetch()){
                             if (strlen($data['extrait']) < $length) {
-                                array_push($id_extrait, $data['id_extrait']);
+                                $temp_id[$data['id_extrait'].";".$id_utilisateur] = $data['extrait'];
                             }
                         }
                         array_push($titre, $choix_nb);
                         array_push($titre, $length);
-                        // print_r($id_extrait);
+                        // print_r($temp_id);
                     }
                     elseif ($choix_nb == "supérieur à"){ # Si sup
                         while ($data = $annotation->fetch()){
                             if (strlen($data['extrait']) > $length) {
-                                array_push($id_extrait, $data['id_extrait']);
+                                $temp_id[$data['id_extrait'].";".$id_utilisateur] = $data['extrait'];
                             }
                         }
                         array_push($titre, $choix_nb);
                         array_push($titre, $length);
-                        // print_r($id_extrait);
+                        // print_r($temp_id);
                     }
                     elseif ($choix_nb == $choix[2]){ #Si entre
                         $pos = strpos($length, ",");
@@ -239,20 +257,33 @@ session_start();
                         // echo $nb_apres;
                         while ($data = $annotation->fetch()){
                             if ($nb_avant < strlen($data['extrait']) and strlen($data['extrait']) < $nb_apres) {
-                                array_push($id_extrait, $data['id_extrait']);
+                                $temp_id[$data['id_extrait'].";".$id_utilisateur] = $data['extrait'];
                             }
                         }
                         array_push($titre, $choix_nb);
                         array_push($titre, $length);
-                        // print_r($id_extrait);
+                        // print_r($temp_id);
                     }
                     $annotation->closeCursor();
                     
-                    echo "<table><tr><td><b>".$titre[0]."</b></td><td><b>".$titre[1]."</b></td></tr>";
-                    for ($i=0;$i<count($id_extrait);$i++){
-                        $extrait = $bdd->query('SELECT * FROM corpus WHERE id_extrait LIKE '.$id_extrait[$i]);
+                    echo "<table><tr><td><b>".$titre[0]."</b></td><td><b>".$titre[1]."</b></td></tr>
+                    <tr><td><b>ID extrait</b></td><td><b>ID utilisateur</b></td><td><b>Soutenu/Courant/Familier/Poubelle</b></td><td><b>Extrait</b></td>";
+                    foreach ($temp_id as $key => $value){
+                        $pos = strpos($key, ";");
+                        $reg = array();
+                        $id_extrait = substr($key, 0, $pos);
+                        $id_user = substr($key, $pos+1, strlen($key));
+                        $extrait = $bdd->query('SELECT * FROM annotation WHERE id_extrait LIKE '.$id_extrait.' AND id_utilisateur LIKE '.$id_user);
                         while ($data = $extrait->fetch()){
-                            echo "<tr><td>".$data['id_extrait']."</td><td>".$data['extrait']."</td></tr>";
+                            $temp_reg = $data['pro_s'].$data['pro_c'].$data['pro_f'].$data['pro_p'];
+                            for ($i=0;$i<5;$i++){
+                                if($temp_reg[$i]==0){array_push($reg, "0");}
+                                elseif($temp_reg[$i]==1){array_push($reg, "25");}
+                                elseif($temp_reg[$i]==2){array_push($reg, "50");}
+                                elseif($temp_reg[$i]==3){array_push($reg, "75");}
+                                else{array_push($reg, "100");}
+                            }
+                            echo "<tr><td>".$id_extrait."</td><td>".$id_user."</td><td>".$reg[0]."/".$reg[1]."/".$reg[2]."/".$reg[3]."/".$reg[4]."</td><td>".$value."</td></tr>";
                         }
                         $extrait->closeCursor();
                     }
@@ -267,10 +298,11 @@ session_start();
 
 
             function descripteurs($id_utilisateur, $statut, $bdd){
-                $descripteurs=$bdd->query('SELECT id_descripteur, descripteur FROM descripteurs');
+                $descripteurs=$bdd->query('SELECT id_descripteur, niveau, descripteur FROM descripteurs');
                 echo "<form method=\"post\"><p><b>";
                 while ($descrips=$descripteurs->fetch()) {
-                    echo "<INPUT type=\"checkbox\" name=\"descripteurs[]\" class=\"filled-in\" id=".$descrips['id_descripteur']." value=".$descrips['id_descripteur']."><label for=".$descrips['id_descripteur'].">".$descrips['descripteur']."</label><br>";
+                    $nom_desc = $descrips['niveau']." - ".$descrips['id_descripteur']." ".$descrips['descripteur'];
+                    echo "<INPUT type=\"checkbox\" name=\"descripteurs[]\" class=\"filled-in\" id=".$descrips['id_descripteur']." value=".$descrips['id_descripteur']."><label for=".$descrips['id_descripteur'].">".$nom_desc."</label><br>";
                 }
 				 echo "</b></p>";
                 $descripteurs->closeCursor();
