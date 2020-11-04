@@ -301,7 +301,7 @@ session_start();
             <div class=\"col-md-12\">
                 <div class=\"card\">
                     <div class=\"card-action\">
-                        Problèmes signalés
+                        Informations utilisateurs
                     </div>
                     <div class=\"card-content\">
                         <div class=\"table-responsive\">
